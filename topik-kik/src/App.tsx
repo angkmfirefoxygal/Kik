@@ -3,13 +3,15 @@ import ProblemView from './components/ProblemView';
 import AnswerEditor from './components/AnswerEditor';
 import FeedbackPanel from './components/FeedbackPanel';
 import SatisfactionToggle from './components/SatisfactionToggle';
+import { getFeedback, generateProblem } from './services/openai';
+import type { TOPIKFeedback, TOPIKProblem } from './services/openai';
 
-// 샘플 문제 데이터
+// 샘플 문제 데이터 (기본 문제)
 const SAMPLE_PROBLEM = {
   number: 'TOPIK II 쓰기 54번',
   text: `다음을 주제로 하여 자신의 생각을 600~700자로 글을 쓰십시오. 단, 문제를 그대로 옮겨 쓰지 마십시오.
 
-최근 식당이나 병원, 은행에서도 디지털 기기를 사용하고 있습니다. 그런데 디지털 기기에서 소외되는 사람이 있습니다. 아래의 내용을 중심으로 ‘디지털 소외 문제와 해결 방안’에 대해 자신의 생각을 쓰십시오.
+최근 식당이나 병원, 은행에서도 디지털 기기를 사용하고 있습니다. 그런데 디지털 기기에서 소외되는 사람이 있습니다. 아래의 내용을 중심으로 '디지털 소외 문제와 해결 방안'에 대해 자신의 생각을 쓰십시오.
 
 1. 디지털 기술을 어떻게 활용하고 있는가?
 2. 디지털 소외되는 사람은 누구인가? 왜 소외되는가?
@@ -18,16 +20,30 @@ const SAMPLE_PROBLEM = {
   maxLength: 700,
 };
 
-interface FeedbackItem {
-  category: string;
-  score: number;
-  comment: string;
-}
-
 function App() {
+  const [problem, setProblem] = useState<TOPIKProblem>(SAMPLE_PROBLEM);
   const [answer, setAnswer] = useState('');
-  const [feedback, setFeedback] = useState<FeedbackItem[] | null>(null);
+  const [feedback, setFeedback] = useState<TOPIKFeedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingProblem, setIsGeneratingProblem] = useState(false);
+
+  const handleGenerateNewProblem = async () => {
+    setIsGeneratingProblem(true);
+    setAnswer(''); // 답안 초기화
+    setFeedback(null); // 피드백 초기화
+
+    try {
+      const newProblem = await generateProblem();
+      setProblem(newProblem);
+      console.log('✅ 새 문제 로드 완료');
+    } catch (error) {
+      console.error('문제 생성 오류:', error);
+      alert('문제 생성 중 오류가 발생했습니다. 기본 문제를 사용합니다.');
+      setProblem(SAMPLE_PROBLEM);
+    } finally {
+      setIsGeneratingProblem(false);
+    }
+  };
 
   const handleGetFeedback = async () => {
     if (answer.trim().length === 0) {
@@ -37,34 +53,15 @@ function App() {
 
     setIsLoading(true);
 
-    // TODO: 실제 API 호출로 대체 필요
-    // 현재는 샘플 피드백 데이터 사용
-    setTimeout(() => {
-      const sampleFeedback: FeedbackItem[] = [
-        {
-          category: '내용',
-          score: 3,
-          comment: '과제는 수행했지만 예시가 부족합니다.',
-        },
-        {
-          category: '구조',
-          score: 2,
-          comment: '도입과 결론이 약하고, 본론이 한쪽 주장에만 치우쳐 있습니다.',
-        },
-        {
-          category: '문법/어휘',
-          score: 4,
-          comment: '전반적으로 좋지만 조사 실수가 몇 군데 보입니다.',
-        },
-        {
-          category: '표현/연결성',
-          score: 3,
-          comment: '그러나/반면에 등 연결어를 좀 더 다양하게 써보면 좋겠습니다.',
-        },
-      ];
-      setFeedback(sampleFeedback);
+    try {
+      const result = await getFeedback(problem.text, answer);
+      setFeedback(result);
+    } catch (error) {
+      console.error('피드백 생성 오류:', error);
+      alert('피드백 생성 중 오류가 발생했습니다. API 키를 확인해주세요.');
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -72,24 +69,35 @@ function App() {
       <div className="max-w-4xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            TOPIK 쓰기 연습 + AI 피드백 (MVP)
+            TOPIK 쓰기 연습 + AI 피드백
           </h1>
           <p className="text-gray-600">
             한국어능력시험 쓰기 영역 실전 연습과 즉각적인 피드백을 받아보세요
           </p>
         </header>
 
+        {/* New Problem Button */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={handleGenerateNewProblem}
+            disabled={isGeneratingProblem || isLoading}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+          >
+            {isGeneratingProblem ? '새 문제 생성 중...' : '🎯 새 문제 생성'}
+          </button>
+        </div>
+
         <ProblemView
-          problemNumber={SAMPLE_PROBLEM.number}
-          problemText={SAMPLE_PROBLEM.text}
-          recommendedLength={`${SAMPLE_PROBLEM.minLength}~${SAMPLE_PROBLEM.maxLength}자`}
+          problemNumber={problem.number}
+          problemText={problem.text}
+          recommendedLength={`${problem.minLength}~${problem.maxLength}자`}
         />
 
         <AnswerEditor
           value={answer}
           onChange={setAnswer}
-          minLength={SAMPLE_PROBLEM.minLength}
-          maxLength={SAMPLE_PROBLEM.maxLength}
+          minLength={problem.minLength}
+          maxLength={problem.maxLength}
         />
 
         <div className="mb-6">
