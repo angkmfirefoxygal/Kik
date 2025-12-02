@@ -11,6 +11,13 @@ export interface CategoryFeedback {
   comment_english: string;
 }
 
+export interface CorrectedSentence {
+  original: string;
+  corrected: string;
+  reason_korean: string;
+  reason_english: string;
+}
+
 export interface TOPIKFeedback {
   overall_score: number; // 0-50
   estimated_level: string; // TOPIK 급수
@@ -24,6 +31,7 @@ export interface TOPIKFeedback {
   weaknesses_english: string;
   specific_improvements_korean: string;
   specific_improvements_english: string;
+  corrected_sentences: CorrectedSentence[];
 }
 
 export interface TOPIKProblem {
@@ -79,31 +87,46 @@ Your task: Evaluate the essay based on TOPIK official scoring rubrics.
   "estimated_level": "[TOPIK level: 1급/2급/3급/4급/5급/6급]",
   "task_performance": {
     "score": [0-15],
-    "comment_korean": "[구체적 피드백 - 한국어]",
-    "comment_english": "[Specific feedback - English]"
+    "comment_korean": "[구체적 피드백 - 한국어, 구체적인 문장 예시 포함]",
+    "comment_english": "[Specific feedback - English, include specific sentence examples]"
   },
   "organization": {
     "score": [0-15],
-    "comment_korean": "[구체적 피드백 - 한국어]",
-    "comment_english": "[Specific feedback - English]"
+    "comment_korean": "[구체적 피드백 - 한국어, 구체적인 문장 예시 포함]",
+    "comment_english": "[Specific feedback - English, include specific sentence examples]"
   },
   "grammar_vocabulary": {
     "score": [0-10],
-    "comment_korean": "[구체적 피드백 - 한국어]",
-    "comment_english": "[Specific feedback - English]"
+    "comment_korean": "[구체적 피드백 - 한국어, 구체적인 문장 예시 포함]",
+    "comment_english": "[Specific feedback - English, include specific sentence examples]"
   },
   "style_expression": {
     "score": [0-10],
-    "comment_korean": "[구체적 피드백 - 한국어]",
-    "comment_english": "[Specific feedback - English]"
+    "comment_korean": "[구체적 피드백 - 한국어, 구체적인 문장 예시 포함]",
+    "comment_english": "[Specific feedback - English, include specific sentence examples]"
   },
   "strengths_korean": "[장점 - 한국어]",
   "strengths_english": "[Strengths - English]",
   "weaknesses_korean": "[약점 - 한국어]",
   "weaknesses_english": "[Weaknesses - English]",
   "specific_improvements_korean": "[구체적 개선 방안 - 한국어]",
-  "specific_improvements_english": "[Specific improvements - English]"
+  "specific_improvements_english": "[Specific improvements - English]",
+  "corrected_sentences": [
+    {
+      "original": "[원본 문장 - 개선이 필요한 부분]",
+      "corrected": "[첨삭된 문장 - 개선된 버전]",
+      "reason_korean": "[수정 이유 - 한국어]",
+      "reason_english": "[Correction reason - English]"
+    }
+  ]
 }
+
+**IMPORTANT - Corrected Sentences**:
+- Identify 3-5 sentences that need improvement (grammar, vocabulary, style, or clarity)
+- Provide the exact original sentence and improved version
+- Explain WHY the correction was needed
+- If the essay is excellent with no corrections needed, return an empty array []
+- Focus on the most impactful improvements that will help the student learn
 
 ---
 

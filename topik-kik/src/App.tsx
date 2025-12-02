@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ProblemView from './components/ProblemView';
 import AnswerEditor from './components/AnswerEditor';
 import FeedbackPanel from './components/FeedbackPanel';
+import CorrectedText from './components/CorrectedText';
 import SatisfactionToggle from './components/SatisfactionToggle';
 import { getFeedback, generateProblem } from './services/openai';
 import type { TOPIKFeedback, TOPIKProblem } from './services/openai';
@@ -67,7 +68,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 text-center">
+        <header className="mt-10 mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             TOPIK 쓰기 연습 + AI 피드백
           </h1>
@@ -109,6 +110,10 @@ function App() {
             {isLoading ? '피드백 생성 중...' : '피드백 받기'}
           </button>
         </div>
+
+        {feedback && feedback.corrected_sentences && (
+          <CorrectedText correctedSentences={feedback.corrected_sentences} />
+        )}
 
         <FeedbackPanel feedback={feedback} isLoading={isLoading} />
 
